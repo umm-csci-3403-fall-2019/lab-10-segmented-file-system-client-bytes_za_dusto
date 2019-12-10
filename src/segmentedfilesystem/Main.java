@@ -30,49 +30,25 @@ public class Main{
             DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 6014);
             socket.send(packet);
 
-            ArrayList<HeaderPacket> headerList = new ArrayList<HeaderPacket>();
-            ArrayList<DataPacket> dataList = new ArrayList<DataPacket>();
+            clientFile cf = new clientFile();
 
-            short fileSize=Short.MAX_VALUE;
-            short packetsReceived = 0;
-            int counter = 0;
-            short fullSize = 0;
-
-            while(packetsReceived < fileSize) {
+            while(!cf.isDone()) {
                 packet = new DatagramPacket(buf, buf.length);
                 socket.receive(packet);
 
                 if (packet.getData()[0] % 2 == 0) {
                     System.out.println("Header Packet");
-                    HeaderPacket headerPacket = new HeaderPacket(packet);
-                    headerList.add(headerPacket);
+                    HeaderPacket headerPacket = new HeaderPacket(packet.getData());
+                    cf.addPacket(headerPacket);
                 } else {
                     System.out.println("Data Packet");
-                    DataPacket dataPacket = new DataPacket(packet);
-                    dataList.add(dataPacket);
-
-                    if (dataPacket.status % 4 == 3){
-                        counter++;
-                        fullSize+=(ByteBuffer.wrap(dataPacket.packetNumber).getShort() + 2);
-                        System.out.println("Ful size is " + fullSize + " with counter " + counter);
-                    }
-
+                    DataPacket dataPacket = new DataPacket(packet.getData());
+                    cf.addPacket(dataPacket);
                 }
 
-                if(counter == 3) {
-                    fileSize = fullSize;
-                }
-
-                packetsReceived++;
             }
 
-            for (HeaderPacket headerPacket : headerList) {
-                System.out.println(headerPacket);
-            }
 
-            for (DataPacket dataPacket : dataList) {
-                System.out.println(dataPacket);
-            }
 
 
         } catch (SocketException se){
