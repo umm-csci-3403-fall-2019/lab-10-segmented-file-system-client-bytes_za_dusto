@@ -1,6 +1,11 @@
 package segmentedfilesystem;
+import com.sun.xml.internal.ws.api.message.HeaderList;
+
 import java.io.IOException;
 import java.net.*;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Main{
 
@@ -8,29 +13,67 @@ public class Main{
     InetAddress address;
     DatagramSocket socket = null;
     DatagramPacket packet;
-    byte[] sendBuf = new byte[256];
+    byte[] sendBuf = new byte[1028];
 
     public static void main(String[] args) throws IOException {
 
-        if (args.length != 2) {
-            System.out.println("Pass in a port followed by a hostname");
+        if (args.length != 1) {
+            System.out.println("Pass in a port");
             return;
-        } else {
-            System.out.println("Using port " + args[0] + " and using hostname " + args[1]);
         }
 
         try {
             DatagramSocket socket = new DatagramSocket();
 
-            byte[] buf = new byte[256];
-            InetAddress address = InetAddress.getByName(args[1]);
-            DatagramPacket packet = new DatagramPacket(buf, buf.length, address, Integer.parseInt(args[0]));
+            byte[] buf = new byte[1028];
+            InetAddress address = InetAddress.getByName("csci-4409.morris.umn.edu");
+            DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 6014);
             socket.send(packet);
 
-            packet = new DatagramPacket(buf, buf.length);
-            socket.receive(packet);
+            ArrayList<HeaderPacket> headerList = new ArrayList<HeaderPacket>();
+            ArrayList<DataPacket> dataList = new ArrayList<DataPacket>();
 
-            Packet.addPacket(packet);
+            short fileSize=Short.MAX_VALUE;
+            short packetsReceived = 0;
+            int counter = 0;
+            short fullSize = 0;
+
+            while(packetsReceived < fileSize) {
+                packet = new DatagramPacket(buf, buf.length);
+                socket.receive(packet);
+
+                if (packet.getData()[0] % 2 == 0) {
+                    System.out.println("Header Packet");
+                    HeaderPacket headerPacket = new HeaderPacket(packet);
+                    headerList.add(headerPacket);
+                } else {
+                    System.out.println("Data Packet");
+                    DataPacket dataPacket = new DataPacket(packet);
+                    dataList.add(dataPacket);
+
+                    if (dataPacket.status % 4 == 3){
+                        counter++;
+                        fullSize+=(ByteBuffer.wrap(dataPacket.packetNumber).getShort() + 2);
+                        System.out.println("Ful size is " + fullSize + " with counter " + counter);
+                    }
+
+                }
+
+                if(counter == 3) {
+                    fileSize = fullSize;
+                }
+
+                packetsReceived++;
+            }
+
+            for (HeaderPacket headerPacket : headerList) {
+                System.out.println(headerPacket);
+            }
+
+            for (DataPacket dataPacket : dataList) {
+                System.out.println(dataPacket);
+            }
+
 
         } catch (SocketException se){
             System.out.println("Failed to create a socket");

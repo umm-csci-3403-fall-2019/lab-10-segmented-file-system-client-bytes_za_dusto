@@ -1,17 +1,20 @@
 package segmentedfilesystem;
 
+import java.net.DatagramPacket;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class DataPacket extends Packet {
+public class DataPacket {
     byte status;
     byte fileId;
-    byte[] packetNum;
+    byte[] packetNumber = new byte[2];
     byte[] data;
 
-    public DataPacket(byte[] packet){
-        this.status=packet[0];
-        this.fileId=packet[1];
-        this.packetNum=Arrays.copyOfRange(packet,2,4);
-        this.data = Arrays.copyOfRange(packet,4,packet.length);
+    public DataPacket(DatagramPacket p){
+        this.status = p.getData()[0];
+        this.fileId = p.getData()[1];
+        this.packetNumber[0] = p.getData()[2];
+        this.packetNumber[1] = p.getData()[3];
+        this.data = Arrays.copyOfRange(p.getData(),4,p.getLength());
     }
 }
