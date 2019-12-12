@@ -8,10 +8,10 @@ import java.util.HashMap;
 
 
 public class ClientFile {
-    private int maxPackets;
-    private int packetsEncountered;
-    private boolean finished;
-    private HashMap<Integer,byte[]> packetsMap;
+    public int maxPackets;
+    public int packetsEncountered;
+    public boolean finished;
+    public HashMap<Integer,byte[]> packetsMap;
 
     public ClientFile(DatagramPacket packet){
         maxPackets = Integer.MAX_VALUE;
