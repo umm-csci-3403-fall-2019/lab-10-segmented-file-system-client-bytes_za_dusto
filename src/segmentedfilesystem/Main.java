@@ -1,79 +1,53 @@
 package segmentedfilesystem;
-import com.sun.xml.internal.ws.api.message.HeaderList;
 
 import java.io.IOException;
 import java.net.*;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 
 public class Main{
 
-    int port; // call in Sys.in
-    InetAddress address;
-    DatagramSocket socket = null;
-    DatagramPacket packet;
-    byte[] sendBuf = new byte[1028];
 
     public static void main(String[] args) throws IOException {
-
-        if (args.length != 1) {
-            System.out.println("Pass in a port");
-            return;
-        }
+        byte[] buf = new byte[1028];
 
         try {
+            // Establish Connection
             DatagramSocket socket = new DatagramSocket();
-
-            byte[] buf = new byte[1028];
             InetAddress address = InetAddress.getByName("csci-4409.morris.umn.edu");
             DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 6014);
             socket.send(packet);
 
-            ArrayList<HeaderPacket> headerList = new ArrayList<HeaderPacket>();
-            ArrayList<DataPacket> dataList = new ArrayList<DataPacket>();
+            // A Hashmap to store files with their fileId as key
+            //  and a list of all the files in an array list
+            HashMap<Byte,clientFile> files = new HashMap<>();
+            ArrayList<clientFile> allFiles = new ArrayList<>();
 
-            short fileSize=Short.MAX_VALUE;
-            short packetsReceived = 0;
-            int counter = 0;
-            short fullSize = 0;
-
-            while(packetsReceived < fileSize) {
+            while(true) {
+                // Receive packets
                 packet = new DatagramPacket(buf, buf.length);
                 socket.receive(packet);
 
-                if (packet.getData()[0] % 2 == 0) {
-                    System.out.println("Header Packet");
-                    HeaderPacket headerPacket = new HeaderPacket(packet);
-                    headerList.add(headerPacket);
+                // capture the second index of buffer which is fileId
+                byte fileId = buf[1];
+
+                if(files.get(fileId)==null){
+                    files.put(fileId, new clientFile(packet));
                 } else {
-                    System.out.println("Data Packet");
-                    DataPacket dataPacket = new DataPacket(packet);
-                    dataList.add(dataPacket);
+                    files.get(fileId).addPacket(packet);
+                }
 
-                    if (dataPacket.status % 4 == 3){
-                        counter++;
-                        fullSize+=(ByteBuffer.wrap(dataPacket.packetNumber).getShort() + 2);
-                        System.out.println("Ful size is " + fullSize + " with counter " + counter);
+                if(files.get(fileId).isFinished()){
+                    allFiles.add(files.remove(fileId));
+                    if(files.isEmpty()){
+                        break;
                     }
-
                 }
-
-                if(counter == 3) {
-                    fileSize = fullSize;
-                }
-
-                packetsReceived++;
             }
 
-            for (HeaderPacket headerPacket : headerList) {
-                System.out.println(headerPacket);
+            for(clientFile file: allFiles){
+                file.createFile();
             }
-
-            for (DataPacket dataPacket : dataList) {
-                System.out.println(dataPacket);
-            }
-
 
         } catch (SocketException se){
             System.out.println("Failed to create a socket");
