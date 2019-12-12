@@ -2,7 +2,6 @@ package segmentedfilesystem;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 
 public class clientFile {
     byte[] packet;
@@ -20,19 +19,6 @@ public class clientFile {
 
     ArrayList<Byte> master = new ArrayList<>();
 
-    public void addPacket(HeaderPacket p) {
-        this.packet=p.filename;
-        this.fileId = p.fileId;
-        writeFile();
-    }
-
-    public void addPacket(DataPacket p){
-        this.packet=p.data;
-        this.fileId = p.fileId;
-        this.status = p.status;
-        this.packetNumber = p.packetNumber;
-        writeFile();
-    }
 
     public void writeFile() {
 

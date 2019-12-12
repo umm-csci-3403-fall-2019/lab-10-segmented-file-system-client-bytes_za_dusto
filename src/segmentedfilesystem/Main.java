@@ -1,11 +1,7 @@
 package segmentedfilesystem;
-import com.sun.xml.internal.ws.api.message.HeaderList;
 
 import java.io.IOException;
 import java.net.*;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Main{
 
@@ -31,23 +27,6 @@ public class Main{
             socket.send(packet);
 
             clientFile cf = new clientFile();
-
-            while(!cf.isDone()) {
-                packet = new DatagramPacket(buf, buf.length);
-                socket.receive(packet);
-
-                if (packet.getData()[0] % 2 == 0) {
-                    System.out.println("Header Packet");
-                    HeaderPacket headerPacket = new HeaderPacket(packet.getData());
-                    cf.addPacket(headerPacket);
-                } else {
-                    System.out.println("Data Packet");
-                    DataPacket dataPacket = new DataPacket(packet.getData());
-                    cf.addPacket(dataPacket);
-                }
-
-            }
-
 
 
 
