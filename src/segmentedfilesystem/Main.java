@@ -3,6 +3,7 @@ package segmentedfilesystem;
 import java.io.IOException;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class Main{
@@ -20,8 +21,8 @@ public class Main{
 
             // A Hashmap to store files with their fileId as key
             //  and a list of all the files in an array list
-            HashMap<Byte,clientFile> files = new HashMap<>();
-            ArrayList<clientFile> allFiles = new ArrayList<>();
+            HashMap<Byte,ClientFile> files = new HashMap<>();
+            ArrayList<ClientFile> allFiles = new ArrayList<>();
 
             while(true) {
                 // Receive packets
@@ -31,21 +32,27 @@ public class Main{
                 // capture the second index of buffer which is fileId
                 byte fileId = buf[1];
 
+                // If fieldId is not in hashmap meaning it has never been encountered
+                //  add it to hashmap. Otherwise, get it from hashmap and call addPacket
                 if(files.get(fileId)==null){
-                    files.put(fileId, new clientFile(packet));
+                    files.put(fileId, new ClientFile(packet));
                 } else {
                     files.get(fileId).addPacket(packet);
                 }
 
+                // See if file associated with fileId is finished.
+                // Then remove it from hashmap and add it arraylist
                 if(files.get(fileId).isFinished()){
                     allFiles.add(files.remove(fileId));
+                    // If hashmap is empty, all files are finished.
                     if(files.isEmpty()){
                         break;
                     }
                 }
             }
 
-            for(clientFile file: allFiles){
+            // For every file in array list create the file
+            for(ClientFile file: allFiles){
                 file.createFile();
             }
 

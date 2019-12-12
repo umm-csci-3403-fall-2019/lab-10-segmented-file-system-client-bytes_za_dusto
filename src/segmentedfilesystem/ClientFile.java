@@ -7,13 +7,13 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 
-public class clientFile {
+public class ClientFile {
     private int maxPackets;
     private int packetsEncountered;
     private boolean finished;
     private HashMap<Integer,byte[]> packetsMap;
 
-    public clientFile(DatagramPacket packet){
+    public ClientFile(DatagramPacket packet){
         maxPackets = Integer.MAX_VALUE;
         packetsEncountered = 0;
         finished = false;
@@ -27,28 +27,33 @@ public class clientFile {
         packetsEncountered++;
 
         int status = packet.getData()[0];
-        byte[] pNumberData = new byte[]{packet.getData()[2], packet.getData()[2]};
+        byte[] pNumberData = new byte[]{packet.getData()[2], packet.getData()[3]};
         int packetNumber = ByteBuffer.wrap(pNumberData).getShort();
 
 
         switch(status % 4){
             case 3: {
+                // If it's the last packet, get the packet number and add 2 for header plus index shift
                 maxPackets = packetNumber + 2;
             }
             case 1: {
+                // If it's a data packet, put it in the hashmap with it's packetNumber as key
                 packetsMap.put(packetNumber, Arrays.copyOf(packet.getData(),packet.getLength()));
                 break;
             }
             default:{
+                // Data packets start at 0, so header packet is stored in hashmap with -1 as key
                 packetsMap.put(-1,Arrays.copyOf(packet.getData(),packet.getLength()));
             }
         }
 
+        // If packets encountered is the size we got from the last packet, file is finished receiving all apckets
         if(packetsEncountered==maxPackets){
             finished = true;
         }
     }
 
+    // Create the File
     public void createFile() throws IOException {
 
         byte[] headerFile = packetsMap.get(-1);
@@ -58,9 +63,6 @@ public class clientFile {
         OutputStream fileOS = new FileOutputStream(file);
         System.out.println(fileName);
 
-        if(file.createNewFile()){
-            System.out.println("File with same name already exists");
-        }
 
         for(int i=0; i <maxPackets - 1; i++){
             byte[] packet = packetsMap.get(i);
@@ -68,7 +70,7 @@ public class clientFile {
         }
     }
 
-
+    // Return if clientFile is finished
     public boolean isFinished(){
         return finished;
     }
