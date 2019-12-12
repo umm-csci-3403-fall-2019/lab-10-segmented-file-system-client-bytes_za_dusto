@@ -2,33 +2,28 @@ package segmentedfilesystem;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Main{
 
-    int port; // call in Sys.in
-    InetAddress address;
-    DatagramSocket socket = null;
-    DatagramPacket packet;
-    byte[] sendBuf = new byte[1028];
 
     public static void main(String[] args) throws IOException {
-
-        if (args.length != 1) {
-            System.out.println("Pass in a port");
-            return;
-        }
+        byte[] buf = new byte[1028];
 
         try {
             DatagramSocket socket = new DatagramSocket();
-
-            byte[] buf = new byte[1028];
             InetAddress address = InetAddress.getByName("csci-4409.morris.umn.edu");
             DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 6014);
             socket.send(packet);
 
-            clientFile cf = new clientFile();
+            HashMap<Byte,clientFile> files = new HashMap<>();
+            ArrayList<clientFile> allFiles = new ArrayList<>();
 
-
+            while(true) {
+                packet = new DatagramPacket(buf, buf.length);
+                socket.receive(packet);
+            }
 
         } catch (SocketException se){
             System.out.println("Failed to create a socket");
